@@ -1,92 +1,183 @@
-/* ============================== typing animation ============================ */
-var typed = new Typed(".typing",{
-    strings:["","a Computer Science and Economics Student","a Software Developer","a Data Analyst","an Innovator"],
-    typeSpeed:100,
-    BackSpeed:60,
-    loop:true
-})
-/* ============================== Aside ============================ */
-const nav = document.querySelector(".nav"),
-      navList = nav.querySelectorAll("li"),
-      totalNavList = navList.length,
-      allSection = document.querySelectorAll(".section"),
-      totalSection = allSection.length;
-      for(let i=0; i<totalNavList; i++)
-      {
-          const a = navList[i].querySelector("a");
-          a.addEventListener("click", function()
-          {
-              removeBackSection();
-              for(let j=0; j<totalNavList; j++)
-              {
-                  if(navList[j].querySelector("a").classList.contains("active"))
-                  {
-                      addBackSection(j);
-                     // allSection[j].classList.add("back-section");
-                  }
-                  navList[j].querySelector("a").classList.remove("active");
-              }
-              this.classList.add("active")
-              showSection(this);
-              if(window.innerWidth < 1200)
-              {
-                  asideSectionTogglerBtn();
-              }
-          })
+/* ============================================================
+   Vasu Singh — Portfolio
+   Section navigation, mobile sidebar, card tilt,
+   contact form, accent switcher
+   ============================================================ */
+
+(function () {
+  "use strict";
+
+  /* ---------- Section navigation ---------- */
+  const navLinks = document.querySelectorAll(".nav-link");
+  const sections = document.querySelectorAll(".section");
+  const aside = document.querySelector(".aside");
+
+  function showSection(id) {
+    sections.forEach((s) => s.classList.remove("active"));
+    const target = document.getElementById(id);
+    if (target) target.classList.add("active");
+
+    document.querySelectorAll(".nav .nav-link").forEach((link) => {
+      link.classList.toggle("active", link.getAttribute("data-section") === id);
+    });
+
+    window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+  }
+
+  navLinks.forEach((link) => {
+    link.addEventListener("click", function (e) {
+      const id = this.getAttribute("data-section");
+      if (!id) return;
+      e.preventDefault();
+      showSection(id);
+      if (aside.classList.contains("open")) closeAside();
+    });
+  });
+
+  /* ---------- Mobile sidebar open/close ---------- */
+  const navToggler = document.querySelector(".nav-toggler");
+
+  function openAside() {
+    aside.classList.add("open");
+    navToggler.innerHTML = '<i class="fas fa-times"></i>';
+  }
+  function closeAside() {
+    aside.classList.remove("open");
+    navToggler.innerHTML = '<i class="fas fa-bars"></i>';
+  }
+  if (navToggler) {
+    navToggler.addEventListener("click", () => {
+      aside.classList.contains("open") ? closeAside() : openAside();
+    });
+  }
+
+  /* ---------- Card 3D tilt on mousemove ---------- */
+  const tiltCards = document.querySelectorAll(".card");
+  const MAX_TILT = 6;
+
+  tiltCards.forEach((card) => {
+    card.addEventListener("mousemove", (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      card.style.transform =
+        `perspective(900px) rotateY(${x * MAX_TILT}deg) rotateX(${-y * MAX_TILT}deg) translateY(-3px)`;
+    });
+    card.addEventListener("mouseleave", () => {
+      card.style.transform = "";
+    });
+  });
+
+  /* ---------- Contact form ---------- */
+  // TODO: To send emails silently in-page, create a free Formspree form
+  // (https://formspree.io) pointed at mailvasusingh@gmail.com and replace
+  // the placeholder below with your endpoint, e.g. 'https://formspree.io/f/xxxxxxxx'.
+  // While left as the placeholder, the form gracefully falls back to a
+  // pre-filled mailto: link in the visitor's email client.
+  const FORMSPREE_ENDPOINT = 'YOUR_FORMSPREE_ENDPOINT';
+
+  const form = document.getElementById("contactForm");
+  const formNote = document.getElementById("formNote");
+  const submitBtn = document.getElementById("cf-submit");
+
+  function setNote(message, type) {
+    formNote.textContent = message;
+    formNote.className = "form-note" + (type ? " " + type : "");
+  }
+
+  function setLoading(isLoading) {
+    if (!submitBtn) return;
+    if (isLoading) {
+      submitBtn.disabled = true;
+      submitBtn.dataset.label = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<span class="spinner"></span> Sending...';
+    } else {
+      submitBtn.disabled = false;
+      if (submitBtn.dataset.label) submitBtn.innerHTML = submitBtn.dataset.label;
+    }
+  }
+
+  if (form) {
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const name = form.name.value.trim();
+      const email = form.email.value.trim();
+      const subject = form.subject.value.trim();
+      const message = form.message.value.trim();
+
+      if (!name || !email || !subject || !message) {
+        setNote("Please fill in all fields.", "error");
+        return;
       }
-      function removeBackSection()
-      {
-        for(let i=0; i<totalSection; i++)
-        {
-            allSection[i].classList.remove("back-section");
-        }   
+
+      // Fallback: no Formspree endpoint configured -> open mail client.
+      if (!FORMSPREE_ENDPOINT || FORMSPREE_ENDPOINT === "YOUR_FORMSPREE_ENDPOINT") {
+        const body = `Name: ${name}\nEmail: ${email}\n\n${message}`;
+        window.location.href =
+          `mailto:mailvasusingh@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        setNote("Opening your email client...", "success");
+        form.reset();
+        return;
       }
-      function addBackSection(num)
-      {
-        allSection[num].classList.add("back-section");
-      }
-      function showSection(element)
-      {
-          for(let i=0; i<totalSection; i++)
-          {
-              allSection[i].classList.remove("active");
-          }
-          const target = element.getAttribute("href").split("#")[1];
-          document.querySelector("#" + target).classList.add("active")
-      }
-      function updateNav(element)
-      {
-          for(let i=0; i<totalNavList; i++)
-          {
-              navList[i].querySelector("a").classList.remove("active");
-              const target = element.getAttribute("href").split("#")[1];
-              if(target === navList[i].querySelector("a").getAttribute("href").split("#")[1])
-              {
-                navList[i].querySelector("a").classList.add("active");
-              }
-          }
-      }
-      document.querySelector(".hire-me").addEventListener("click", function()
-      {
-          const sectionIndex = this.getAttribute("data-section-index");
-          //console.log(sectionIndex);
-          showSection(this);
-          updateNav(this);
-          removeBackSection();
-          addBackSection(sectionIndex);
+
+      setLoading(true);
+      setNote("", "");
+
+      fetch(FORMSPREE_ENDPOINT, {
+        method: "POST",
+        headers: { Accept: "application/json", "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, subject, message }),
       })
-      const navTogglerBtn = document.querySelector(".nav-toggler"),
-            aside = document.querySelector(".aside");
-            navTogglerBtn.addEventListener("click", () => 
-            {
-                asideSectionTogglerBtn();
-            })
-            function asideSectionTogglerBtn()
-            {
-                aside.classList.toggle("open");
-                navTogglerBtn.classList.toggle("open");
-                for(let i=0; i<totalSection; i++ )
-                {
-                    allSection[i].classList.toggle("open");
-                }
-            }
+        .then((res) => {
+          setLoading(false);
+          if (res.ok) {
+            form.reset();
+            setNote("Thanks — your message has been sent. I'll be in touch soon.", "success");
+          } else {
+            setNote("Something went wrong. Please email me directly.", "error");
+          }
+        })
+        .catch(() => {
+          setLoading(false);
+          setNote("Network error. Please email me directly.", "error");
+        });
+    });
+  }
+
+  /* ---------- Accent switcher (re-imagined skin switcher) ---------- */
+  const themeSwitcher = document.getElementById("themeSwitcher");
+  const themeToggler = document.getElementById("themeToggler");
+  const swatches = document.querySelectorAll(".swatch");
+  const root = document.documentElement;
+
+  if (themeToggler) {
+    themeToggler.addEventListener("click", () => themeSwitcher.classList.toggle("open"));
+  }
+
+  function applyAccent(accent, accentDim) {
+    root.style.setProperty("--accent", accent);
+    root.style.setProperty("--accent-dim", accentDim);
+  }
+
+  const savedAccent = localStorage.getItem("vs-accent");
+  const savedAccentDim = localStorage.getItem("vs-accent-dim");
+  if (savedAccent && savedAccentDim) {
+    applyAccent(savedAccent, savedAccentDim);
+    swatches.forEach((s) =>
+      s.classList.toggle("active", s.getAttribute("data-accent") === savedAccent)
+    );
+  }
+
+  swatches.forEach((swatch) => {
+    swatch.addEventListener("click", function () {
+      const accent = this.getAttribute("data-accent");
+      const accentDim = this.getAttribute("data-accent-dim");
+      applyAccent(accent, accentDim);
+      localStorage.setItem("vs-accent", accent);
+      localStorage.setItem("vs-accent-dim", accentDim);
+      swatches.forEach((s) => s.classList.remove("active"));
+      this.classList.add("active");
+    });
+  });
+})();
