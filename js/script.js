@@ -7,21 +7,22 @@
 (function () {
   "use strict";
 
-  /* ---------- Section navigation ---------- */
-  const navLinks = document.querySelectorAll(".nav-link");
+  /* ---------- Section navigation (scroll + click) ---------- */
+  const navLinks = document.querySelectorAll(".nav-link[data-section]");
   const sections = document.querySelectorAll(".section");
   const aside = document.querySelector(".aside");
 
-  function showSection(id) {
-    sections.forEach((s) => s.classList.remove("active"));
-    const target = document.getElementById(id);
-    if (target) target.classList.add("active");
-
+  function setActiveNav(id) {
     document.querySelectorAll(".nav .nav-link").forEach((link) => {
       link.classList.toggle("active", link.getAttribute("data-section") === id);
     });
+  }
 
-    window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+  function scrollToSection(id) {
+    const target = document.getElementById(id);
+    if (!target) return;
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActiveNav(id);
   }
 
   navLinks.forEach((link) => {
@@ -29,10 +30,39 @@
       const id = this.getAttribute("data-section");
       if (!id) return;
       e.preventDefault();
-      showSection(id);
+      scrollToSection(id);
       if (aside.classList.contains("open")) closeAside();
     });
   });
+
+  /* Highlight nav link for the section in view while scrolling */
+  let scrollTicking = false;
+  function updateActiveOnScroll() {
+    const offset = window.innerHeight * 0.35;
+    let current = sections[0]?.id;
+    sections.forEach((section) => {
+      if (section.offsetTop - offset <= window.scrollY) {
+        current = section.id;
+      }
+    });
+    if (current) setActiveNav(current);
+  }
+
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (!scrollTicking) {
+        scrollTicking = true;
+        requestAnimationFrame(() => {
+          updateActiveOnScroll();
+          scrollTicking = false;
+        });
+      }
+    },
+    { passive: true }
+  );
+
+  updateActiveOnScroll();
 
   /* ---------- Mobile sidebar open/close ---------- */
   const navToggler = document.querySelector(".nav-toggler");
